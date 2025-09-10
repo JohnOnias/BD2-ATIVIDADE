@@ -1,3 +1,5 @@
+use reservaesportiva;
+
 INSERT INTO Usuario (nome, email, telefone, tipo) VALUES
 ('Ana Silva', 'ana.silva@email.com', '11999999999', 'Aluno'),
 ('Bruno Oliveira', 'bruno.oliveira@email.com', '11988888888', 'Aluno'),
