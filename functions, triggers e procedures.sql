@@ -36,19 +36,23 @@ DELIMITER ;
 
 # Calcula O tempo de uso da reserva (em horas) 
 
+drop function fn_tempo_uso;
 DELIMITER //
 CREATE FUNCTION fn_tempo_uso(idRes INT) 
 RETURNS INT
 DETERMINISTIC
 BEGIN
     DECLARE horas INT;
-    SELECT TIMESTAMPDIFF(HOUR, data_inicio, data_fim)
-    INTO horas
-    FROM Reserva
+    SELECT TIMESTAMPDIFF(HOUR, data_inicio, data_fim) INTO horas FROM Reserva
     WHERE id_reserva = idRes;
+    
     RETURN horas;
 END //
 DELIMITER ;
+
+select fn_tempo_uso(1) as "Tempo de uso";
+select fn_tempo_uso(2) as "Tempo de uso";
+select fn_tempo_uso(3) as "Tempo de uso";
 
 # Verificar se usuário está punido (1 = sim, 0 = não)
 DELIMITER //
@@ -64,6 +68,11 @@ BEGIN
 END //
 DELIMITER ;
 
+select fn_usuario_punido(1);
+select fn_usuario_punido(2);
+select fn_usuario_punido(3);
+
+
 #################################### Procedures ######################################
 
 # Listar reservas de um usuário
@@ -76,6 +85,10 @@ BEGIN
     WHERE r.id_usuario = idUser;
 END //
 DELIMITER ;
+
+call sp_listar_reservas_usuario(1);
+call sp_listar_reservas_usuario(2);
+call sp_listar_reservas_usuario(3); 
 
 # Criar reserva (com verificação de punição e disponibilidade)
 
@@ -104,11 +117,17 @@ BEGIN
         SET MESSAGE_TEXT = 'Equipamento indisponível para reserva.';
     END IF;
 
-    # Criar reserva
+   # Criar reserva
     INSERT INTO Reserva (id_usuario, id_equipamento, data_reserva, data_inicio, data_fim, status)
     VALUES (idUser, idEquip, CURDATE(), dtInicio, dtFim, 'Pendente');
 END //
 DELIMITER ;
+
+call sp_criar_reserva(3, 2, '2025-09-09 10:00:00', '2025-09-09 11:00:00');
+call sp_criar_reserva(1, 2, '2025-09-09 10:00:00', '2025-09-09 11:00:00'); # não vai funcionar
+
+
+
 
 
 
