@@ -35,8 +35,6 @@ DELIMITER ;
 ############################ Functions ##########################################
 
 # Calcula O tempo de uso da reserva (em horas) 
-
-drop function fn_tempo_uso;
 DELIMITER //
 CREATE FUNCTION fn_tempo_uso(idRes INT) 
 RETURNS INT
@@ -54,7 +52,7 @@ select fn_tempo_uso(1) as "Tempo de uso";
 select fn_tempo_uso(2) as "Tempo de uso";
 select fn_tempo_uso(3) as "Tempo de uso";
 
-# Verificar se usuário está punido (1 = sim, 0 = não)
+# Verificar se usuário está punido (1 = sim, 0 = não,, 2 = resolvido )
 DELIMITER //
 CREATE FUNCTION fn_usuario_punido(idUser INT) 
 RETURNS TINYINT
@@ -63,6 +61,8 @@ BEGIN
     DECLARE resultado TINYINT DEFAULT 0;
     IF EXISTS ( SELECT 1 FROM Punicao WHERE id_usuario = idUser AND status = 'Ativa') THEN
         SET resultado = 1;
+	elseif (select 1 from Punicao where id_usuario - idUser and status = 'Resolvido') then
+		set resultado = 2;
     END IF;
     RETURN resultado;
 END //
@@ -85,13 +85,12 @@ BEGIN
     WHERE r.id_usuario = idUser;
 END //
 DELIMITER ;
-
+-- testando
 call sp_listar_reservas_usuario(1);
 call sp_listar_reservas_usuario(2);
 call sp_listar_reservas_usuario(3); 
 
 # Criar reserva (com verificação de punição e disponibilidade)
-
 DELIMITER //
 CREATE PROCEDURE sp_criar_reserva(IN idUser INT, IN idEquip INT, IN dtInicio DATETIME, IN dtFim DATETIME)
 BEGIN
@@ -123,13 +122,33 @@ BEGIN
 END //
 DELIMITER ;
 
+-- testando
 call sp_criar_reserva(3, 2, '2025-09-09 10:00:00', '2025-09-09 11:00:00');
 call sp_criar_reserva(1, 2, '2025-09-09 10:00:00', '2025-09-09 11:00:00'); # não vai funcionar
 
 
 
+ -- inner join criado de ultima hora para facilitar a visulaização
+DELIMITER //
+CREATE PROCEDURE inner_tabela(IN id_user INT)
+BEGIN
+    SELECT 
+        u.nome AS nome_usuario,
+        e.nome AS nome_equipamento,
+        
+        r.data_reserva,
+        r.data_inicio,
+        r.data_fim as 'entregue'
+    FROM 
+        Reserva r
+    INNER JOIN Equipamento e ON r.id_equipamento = e.id_equipamento
+    INNER JOIN Usuario u ON r.id_usuario = u.id_usuario
+    WHERE u.id_usuario = id_user;
+END //
+DELIMITER ;
 
-
+-- testando
+call inner_tabela(1);
 
 
 

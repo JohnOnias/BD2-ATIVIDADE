@@ -33,7 +33,7 @@ CREATE TABLE Reserva (
     FOREIGN KEY (id_equipamento) REFERENCES Equipamento(id_equipamento)
 );
 
--- Tabela de responsáveis (opcional, quem gerencia o empréstimo)
+-- Tabela de responsáveis (quem gerencia o empréstimo)
 CREATE TABLE Responsavel (
     id_responsavel INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE RetiradaDevolucao (
     observacao TEXT,
     FOREIGN KEY (id_reserva) REFERENCES Reserva(id_reserva)
 );
-
+-- Tabela de punição (controle sobre punições em usuarios)
 CREATE TABLE Punicao (
     id_punicao INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
