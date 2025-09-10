@@ -1,8 +1,8 @@
-USE reservaesportiva; 
+use reservaesportiva; 
 
--- TRIGGERS 
+########################## TRIGGERS #####################################
 
--- Atualizar quantidade disponível ao aprovar reserva 
+# Atualizar quantidade disponível ao aprovar reserva 
 DELIMITER //
 CREATE TRIGGER trg_atualiza_quantidade_apos_aprovacao
 AFTER UPDATE ON Reserva
@@ -13,11 +13,10 @@ BEGIN
         SET quantidade_disponivel = quantidade_disponivel - 1
         WHERE id_equipamento = NEW.id_equipamento;
     END IF;
-END;
-//
+END //
 DELIMITER ;
 
--- Restaurar quantidade disponível ao cancelar reserva
+# Restaurar quantidade disponível ao cancelar reserva
 
 DELIMITER //
 CREATE TRIGGER trg_restaurar_quantidade_apos_cancelamento
@@ -29,14 +28,13 @@ BEGIN
         SET quantidade_disponivel = quantidade_disponivel + 1
         WHERE id_equipamento = NEW.id_equipamento;
     END IF;
-END;
-//
+END //
 DELIMITER ;
 
 
--- Functions
+############################ Functions ##########################################
 
--- Calcula O tempo de uso da reserva (em horas) 
+# Calcula O tempo de uso da reserva (em horas) 
 
 DELIMITER //
 CREATE FUNCTION fn_tempo_uso(idRes INT) 
@@ -49,31 +47,26 @@ BEGIN
     FROM Reserva
     WHERE id_reserva = idRes;
     RETURN horas;
-END;
-//
+END //
 DELIMITER ;
 
--- Verificar se usuário está punido (1 = sim, 0 = não)
+# Verificar se usuário está punido (1 = sim, 0 = não)
 DELIMITER //
 CREATE FUNCTION fn_usuario_punido(idUser INT) 
 RETURNS TINYINT
 DETERMINISTIC
 BEGIN
     DECLARE resultado TINYINT DEFAULT 0;
-    IF EXISTS (
-        SELECT 1 
-        FROM Punicao 
-        WHERE id_usuario = idUser AND status = 'Ativa'
-    ) THEN
+    IF EXISTS ( SELECT 1 FROM Punicao WHERE id_usuario = idUser AND status = 'Ativa') THEN
         SET resultado = 1;
     END IF;
     RETURN resultado;
-END;
-//
+END //
 DELIMITER ;
 
--- Procedures
--- Listar reservas de um usuário
+#################################### Procedures ######################################
+
+# Listar reservas de um usuário
 DELIMITER //
 CREATE PROCEDURE sp_listar_reservas_usuario(IN idUser INT)
 BEGIN
@@ -81,31 +74,27 @@ BEGIN
     FROM Reserva r
     INNER JOIN Equipamento e ON r.id_equipamento = e.id_equipamento
     WHERE r.id_usuario = idUser;
-END;
-//
+END //
 DELIMITER ;
 
--- Criar reserva (com verificação de punição e disponibilidade)
+# Criar reserva (com verificação de punição e disponibilidade)
 
 DELIMITER //
-CREATE PROCEDURE sp_criar_reserva(
-    IN idUser INT,
-    IN idEquip INT,
-    IN dtInicio DATETIME,
-    IN dtFim DATETIME
-)
+CREATE PROCEDURE sp_criar_reserva(IN idUser INT, IN idEquip INT, IN dtInicio DATETIME, IN dtFim DATETIME)
 BEGIN
     DECLARE disponivel INT;
     DECLARE punido TINYINT;
+    DECLARE mensagem VARCHAR(100);
 
-    -- Verificar punição
+    # Verificar punição
     SET punido = fn_usuario_punido(idUser);
+    
     IF punido = 1 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Usuário está punido e não pode reservar.';
     END IF;
 
-    -- Verificar disponibilidade
+    # Verificar disponibilidade
     SELECT quantidade_disponivel INTO disponivel
     FROM Equipamento
     WHERE id_equipamento = idEquip;
@@ -115,13 +104,11 @@ BEGIN
         SET MESSAGE_TEXT = 'Equipamento indisponível para reserva.';
     END IF;
 
-    -- Criar reserva
+    # Criar reserva
     INSERT INTO Reserva (id_usuario, id_equipamento, data_reserva, data_inicio, data_fim, status)
     VALUES (idUser, idEquip, CURDATE(), dtInicio, dtFim, 'Pendente');
-END;
-//
+END //
 DELIMITER ;
-
 
 
 
